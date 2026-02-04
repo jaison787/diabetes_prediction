@@ -3,9 +3,9 @@ import 'package:flutter/foundation.dart';
 class ApiConfig {
   static String get baseUrl {
     // Dev Tunnel URL provided by the user
-    return 'https://g3bhnl1b-8004.inc1.devtunnels.ms/api/';
+    return 'https://5h44kl7q-8003.inc1.devtunnels.ms/api/';
   }
-
+              
   // Auth Endpoints
   static const String login = 'auth/login/';
   static const String register = 'auth/register/';

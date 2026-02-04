@@ -1,0 +1,8 @@
+
+{
+  "name": "DiaPredict 2.0",
+  "description": "High-precision diabetes risk assessment and health monitoring dashboard with a premium glassmorphic dark theme.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
