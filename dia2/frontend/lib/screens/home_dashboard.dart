@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../services/auth_service.dart';
 import '../services/prediction_service.dart';
 import '../theme/app_theme.dart';
+import 'doctor_dashboard.dart';
 
 class HomeDashboard extends StatefulWidget {
   const HomeDashboard({super.key});
@@ -13,8 +14,8 @@ class HomeDashboard extends StatefulWidget {
 }
 
 class _HomeDashboardState extends State<HomeDashboard> {
-  String _role = 'USER';
-  String _name = 'User';
+  String _role = 'DOCTOR'; // Defaulting for design preview
+  String _name = 'Dr. Aris';
   Map<String, dynamic>? _latestPrediction;
   bool _isHistoryLoading = true;
 
@@ -89,7 +90,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
 
   Widget _buildDashboardByRole() {
     if (_role == 'ADMIN') return const Center(child: Text('Admin Dashboard'));
-    if (_role == 'DOCTOR') return const Center(child: Text('Doctor Dashboard'));
+    if (_role == 'DOCTOR') return const DoctorDashboard();
     return _buildPatientDashboard();
   }
 

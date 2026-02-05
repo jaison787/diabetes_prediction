@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'home_dashboard.dart';
 import 'prediction_form_screen.dart';
 import 'doctor_list_screen.dart';
 import 'profile_screen.dart';
 import 'prediction_history_screen.dart';
+import 'manage_slots_screen.dart';
 import '../theme/app_theme.dart';
 
 class MainScreen extends StatefulWidget {
@@ -17,13 +19,37 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
   bool _isBottomNavVisible = true;
+  String _role = 'DOCTOR'; // Defaulting for design preview
 
-  final List<Widget> _screens = [
-    const HomeDashboard(),
-    const PredictionFormScreen(),
-    const DoctorListScreen(),
-    const ProfileScreen(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadRole();
+  }
+
+  void _loadRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _role = prefs.getString('user_role') ?? 'DOCTOR'; // Defaulting for preview
+    });
+  }
+
+  List<Widget> get _currentScreens {
+    if (_role == 'DOCTOR') {
+      return [
+        const HomeDashboard(),
+        const ManageSlotsScreen(),
+        const Center(child: Text('Patients List', style: TextStyle(color: Colors.white))),
+        const ProfileScreen(),
+      ];
+    }
+    return [
+      const HomeDashboard(),
+      const PredictionFormScreen(),
+      const DoctorListScreen(),
+      const ProfileScreen(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +62,7 @@ class _MainScreenState extends State<MainScreen> {
         children: [
           IndexedStack(
             index: _currentIndex,
-            children: _screens,
+            children: _currentScreens,
           ),
           
           // Animated Bottom Nav
@@ -84,12 +110,19 @@ class _MainScreenState extends State<MainScreen> {
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildNavItem(0, Icons.home_outlined, Icons.home, 'HOME'),
-              _buildNavItem(1, Icons.query_stats_outlined, Icons.query_stats, 'PREDICT'),
-              _buildNavItem(2, Icons.calendar_month_outlined, Icons.calendar_month, 'DOCTORS'),
-              _buildNavItem(3, Icons.person_outline, Icons.person, 'PROFILE'),
-            ],
+            children: _role == 'DOCTOR' 
+              ? [
+                  _buildNavItem(0, Icons.grid_view_outlined, Icons.grid_view, 'HOME'),
+                  _buildNavItem(1, Icons.calendar_month_outlined, Icons.calendar_month, 'CHART'),
+                  _buildNavItem(2, Icons.people_outline, Icons.people, 'PATIENTS'),
+                  _buildNavItem(3, Icons.settings_outlined, Icons.settings, 'SETTINGS'),
+                ]
+              : [
+                  _buildNavItem(0, Icons.home_outlined, Icons.home, 'HOME'),
+                  _buildNavItem(1, Icons.query_stats_outlined, Icons.query_stats, 'PREDICT'),
+                  _buildNavItem(2, Icons.calendar_month_outlined, Icons.calendar_month, 'DOCTORS'),
+                  _buildNavItem(3, Icons.person_outline, Icons.person, 'PROFILE'),
+                ],
           ),
         ),
       ),
