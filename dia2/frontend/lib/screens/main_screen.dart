@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'home_dashboard.dart';
 import 'prediction_form_screen.dart';
 import 'doctor_list_screen.dart';
-import 'my_appointments_screen.dart';
 import 'profile_screen.dart';
+import 'prediction_history_screen.dart';
 import '../theme/app_theme.dart';
 
 class MainScreen extends StatefulWidget {
@@ -20,7 +21,6 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     const HomeDashboard(),
     const PredictionFormScreen(),
-    const PredictionFormScreen(), // Center button also goes to Predict
     const DoctorListScreen(),
     const ProfileScreen(),
   ];
@@ -32,90 +32,35 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       resizeToAvoidBottomInset: true,
-      body: NotificationListener<ScrollNotification>(
-        onNotification: (notification) {
-          if (notification is ScrollUpdateNotification) {
-            // If scrolling down (pixel value increasing), hide nav
-            // If scrolling up (pixel value decreasing), show nav
-            if (notification.scrollDelta! > 10 && _isBottomNavVisible) {
-              setState(() => _isBottomNavVisible = false);
-            } else if (notification.scrollDelta! < -10 && !_isBottomNavVisible) {
-              setState(() => _isBottomNavVisible = true);
-            }
-          }
-          return false;
-        },
-        child: Stack(
-          children: [
-            IndexedStack(
-              index: _currentIndex,
-              children: _screens,
-            ),
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-              bottom: (isKeyboardOpen || !_isBottomNavVisible) ? -130 : 0,
-              left: 0,
-              right: 0,
-              child: _buildBottomNav(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 30),
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        color: const Color(0xCC000000),
-        borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.5),
-            blurRadius: 40,
-            offset: const Offset(0, 20),
-          ),
-        ],
-      ),
-      child: Stack(
-        clipBehavior: Clip.none,
+      body: Stack(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(0, Icons.home_filled, 'HOME'),
-              _buildNavItem(1, Icons.assignment_outlined, 'PREDICT'),
-              const SizedBox(width: 60), // Space for center button
-              _buildNavItem(3, Icons.medical_services_outlined, 'DOCTORS'),
-              _buildNavItem(4, Icons.person_outline, 'PROFILE'),
-            ],
+          IndexedStack(
+            index: _currentIndex,
+            children: _screens,
           ),
-          Positioned(
-            top: -45,
+          
+          // Animated Bottom Nav
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.fastOutSlowIn,
+            bottom: (isKeyboardOpen || !_isBottomNavVisible) ? -120 : 0,
             left: 0,
             right: 0,
-            child: GestureDetector(
-              onTap: () => setState(() => _currentIndex = 2),
-              child: Center(
-                child: Container(
-                  width: 68,
-                  height: 68,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(22),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.white.withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(Icons.add, color: Colors.black, size: 32),
+            child: _buildGlassBottomNav(),
+          ),
+          
+          // iPhone Indicator
+          Positioned(
+            bottom: 8,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                width: 120,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
@@ -125,7 +70,33 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, String label) {
+  Widget _buildGlassBottomNav() {
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          padding: const EdgeInsets.only(top: 16, bottom: 40, left: 24, right: 24),
+          decoration: BoxDecoration(
+            color: const Color(0xCC0A0A0A),
+            border: Border(
+              top: BorderSide(color: Colors.white.withOpacity(0.05)),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildNavItem(0, Icons.home_outlined, Icons.home, 'HOME'),
+              _buildNavItem(1, Icons.query_stats_outlined, Icons.query_stats, 'PREDICT'),
+              _buildNavItem(2, Icons.calendar_month_outlined, Icons.calendar_month, 'DOCTORS'),
+              _buildNavItem(3, Icons.person_outline, Icons.person, 'PROFILE'),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(int index, IconData outlineIcon, IconData filledIcon, String label) {
     bool isActive = _currentIndex == index;
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = index),
@@ -134,18 +105,18 @@ class _MainScreenState extends State<MainScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            icon,
-            color: isActive ? Colors.white : AppColors.silver600,
-            size: 24,
+            isActive ? filledIcon : outlineIcon,
+            color: isActive ? Colors.white : const Color(0xFF64748B),
+            size: 26,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
             label,
             style: TextStyle(
-              color: isActive ? Colors.white : AppColors.silver600,
-              fontSize: 9,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
+              color: isActive ? Colors.white : const Color(0xFF64748B),
+              fontSize: 10,
+              fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+              letterSpacing: 1.2,
             ),
           ),
         ],
@@ -153,3 +124,4 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 }
+
