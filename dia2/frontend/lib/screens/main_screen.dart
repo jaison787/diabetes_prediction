@@ -7,6 +7,7 @@ import 'doctor_list_screen.dart';
 import 'profile_screen.dart';
 import 'prediction_history_screen.dart';
 import 'manage_slots_screen.dart';
+import 'patient_list_screen.dart';
 import '../theme/app_theme.dart';
 
 class MainScreen extends StatefulWidget {
@@ -39,7 +40,7 @@ class _MainScreenState extends State<MainScreen> {
       return [
         const HomeDashboard(),
         const ManageSlotsScreen(),
-        const Center(child: Text('Patients List', style: TextStyle(color: Colors.white))),
+        const PatientListScreen(),
         const ProfileScreen(),
       ];
     }

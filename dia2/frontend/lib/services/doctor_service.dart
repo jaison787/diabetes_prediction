@@ -68,4 +68,21 @@ class DoctorService {
       throw Exception(responseData['message'] ?? 'Booking failed');
     }
   }
+  Future<List<dynamic>> getDoctorAppointments() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('access_token');
+
+    final response = await http.get(
+      Uri.parse('${_baseUrl}${ApiConfig.doctorAppointments}'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    final responseData = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      // Backend returns list directly or in 'results'
+      return responseData is List ? responseData : (responseData['results'] ?? responseData['data'] ?? []);
+    } else {
+      throw Exception(responseData['message'] ?? 'Failed to fetch appointments');
+    }
+  }
 }

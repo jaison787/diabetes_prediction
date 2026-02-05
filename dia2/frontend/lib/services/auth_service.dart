@@ -205,7 +205,10 @@ class AuthService {
     await prefs.setString('access_token', tokens['access']);
     await prefs.setString('refresh_token', tokens['refresh'] ?? '');
     await prefs.setString('user_role', user['role']);
-    await prefs.setString('user_name', user['first_name'] ?? 'User');
+    
+    // Save any available name field
+    final String displayName = user['first_name'] ?? user['username'] ?? user['email']?.split('@')[0] ?? 'Doctor';
+    await prefs.setString('user_name', displayName);
     await prefs.setInt('user_id', user['id'] ?? 0);
   }
 

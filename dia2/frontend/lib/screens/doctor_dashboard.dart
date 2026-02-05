@@ -1,11 +1,50 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/doctor_service.dart';
 import '../theme/app_theme.dart';
 
-class DoctorDashboard extends StatelessWidget {
+class DoctorDashboard extends StatefulWidget {
   const DoctorDashboard({super.key});
 
+  @override
+  State<DoctorDashboard> createState() => _DoctorDashboardState();
+}
+
+class _DoctorDashboardState extends State<DoctorDashboard> {
+  String _doctorName = 'Ramen';
+  List<dynamic> _appointments = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDoctorName();
+    _fetchAppointments();
+  }
+
+  Future<void> _fetchAppointments() async {
+    try {
+      final appointments = await DoctorService().getDoctorAppointments();
+      setState(() {
+        _appointments = appointments;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error fetching appointments: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _loadDoctorName() async {
+    final prefs = await SharedPreferences.getInstance();
+    final name = prefs.getString('user_name') ?? 'Ramen';
+    setState(() {
+      _doctorName = name.startsWith('Dr.') ? name : 'Dr. $name';
+    });
+  }
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -35,9 +74,7 @@ class DoctorDashboard extends StatelessWidget {
                 const SizedBox(height: 24),
                 _buildQuickActions(context),
                 const SizedBox(height: 32),
-                _buildRiskAlertsHeader(),
-                const SizedBox(height: 16),
-                _buildRiskAlertsList(),
+                // Risk Alerts section removed
                 const SizedBox(height: 120), // Bottom nav space
               ],
             ),
@@ -56,8 +93,8 @@ class DoctorDashboard extends StatelessWidget {
           children: [
             ShaderMask(
               shaderCallback: (bounds) => AppColors.silverGradient.createShader(bounds),
-              child: const Text(
-                'Dr. Aris',
+              child: Text(
+                _doctorName,
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 28,
@@ -121,7 +158,7 @@ class DoctorDashboard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'DAILY FORECAST',
+                    'TODAY',
                     style: TextStyle(
                       color: AppColors.silver500,
                       fontSize: 10,
@@ -132,9 +169,9 @@ class DoctorDashboard extends StatelessWidget {
                   const SizedBox(height: 4),
                   ShaderMask(
                     shaderCallback: (bounds) => AppColors.silverGradient.createShader(bounds),
-                    child: const Text(
-                      '12 Appointments',
-                      style: TextStyle(
+                    child: Text(
+                      '${_appointments.length} Appointments',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -154,9 +191,29 @@ class DoctorDashboard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
-          _buildAppointmentItem('09:00', 'AM', 'Julianne Moore', 'Type 2 Routine Checkup', false),
-          const SizedBox(height: 12),
-          _buildAppointmentItem('10:30', 'AM', 'Marcus Wright', 'Follow-up Consult', true),
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator(color: Colors.white))
+          else if (_appointments.isEmpty)
+            const Text('No appointments for today', style: TextStyle(color: AppColors.silver400))
+          else
+            ..._appointments.take(3).map((appointment) {
+              final startTime = appointment['start_time'] ?? '00:00';
+              final patientName = appointment['patient_name'] ?? 'Patient';
+              final notes = appointment['notes'] ?? 'General Checkup';
+              
+              // Simple time parsing for AM/PM
+              final parts = startTime.split(':');
+              int hour = int.parse(parts[0]);
+              String period = hour >= 12 ? 'PM' : 'AM';
+              if (hour > 12) hour -= 12;
+              if (hour == 0) hour = 12;
+              String formattedTime = '${hour.toString().padLeft(2, '0')}:${parts[1]}';
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: _buildAppointmentItem(formattedTime, period, patientName, notes, false),
+              );
+            }).toList(),
         ],
       ),
     ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.1, end: 0);

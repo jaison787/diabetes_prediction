@@ -14,8 +14,8 @@ class HomeDashboard extends StatefulWidget {
 }
 
 class _HomeDashboardState extends State<HomeDashboard> {
-  String _role = 'DOCTOR'; // Defaulting for design preview
-  String _name = 'Dr. Aris';
+  String _role = 'DOCTOR';
+  String _name = 'Doctor';
   Map<String, dynamic>? _latestPrediction;
   bool _isHistoryLoading = true;
 
