@@ -106,7 +106,14 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
+                  onPressed: () {
+                    // Close dialog and navigate to user home
+                    Navigator.of(context).pop(); // Close dialog
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      '/user-home', 
+                      (route) => false,
+                    );
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: Colors.black,

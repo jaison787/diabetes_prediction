@@ -293,7 +293,14 @@ class PredictionResultScreen extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         TextButton(
-          onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
+          onPressed: () {
+            // Close dialog and navigate to user home
+            Navigator.of(context).pop(); // Close dialog
+            Navigator.of(context).pushNamedAndRemoveUntil(
+              '/user-home', 
+              (route) => false,
+            );
+          },
           child: Text(
             'RETURN HOME',
             style: TextStyle(

@@ -147,10 +147,6 @@ class _PatientListScreenState extends State<PatientListScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          ),
           Row(
             children: [
               _buildHeaderButton(Icons.search),
@@ -222,7 +218,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
             onTap: () => setState(() => _selectedDate = date),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              width: 56,
+              width: 80,
               margin: const EdgeInsets.only(right: 12),
               decoration: BoxDecoration(
                 color: isSelected 

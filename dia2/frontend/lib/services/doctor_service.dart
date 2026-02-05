@@ -85,4 +85,26 @@ class DoctorService {
       throw Exception(responseData['message'] ?? 'Failed to fetch appointments');
     }
   }
+
+  /// Fetch the logged-in doctor's profile
+  Future<Map<String, dynamic>> getDoctorProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('access_token');
+
+    final response = await http.get(
+      Uri.parse('${_baseUrl}${ApiConfig.doctorProfile}'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    final responseData = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      // Handle both wrapped and direct response
+      if (responseData is Map<String, dynamic>) {
+        return responseData['data'] ?? responseData;
+      }
+      return responseData;
+    } else {
+      throw Exception(responseData['message'] ?? 'Failed to fetch doctor profile');
+    }
+  }
 }
