@@ -53,9 +53,18 @@ class _PatientListScreenState extends State<PatientListScreen> {
   }
 
   List<dynamic> get _filteredAppointments {
-    // TEMPORARY: Show all appointments to debug display issue
-    // TODO: Re-enable date filtering after confirming cards render correctly
-    return _appointments;
+    // Filter to show only appointments for the selected date
+    final selectedStr = "${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}";
+    
+    return _appointments.where((apt) {
+      final slot = apt['slot_details'] ?? {};
+      final rawDate = (apt['date'] ?? slot['date'])?.toString() ?? '';
+      
+      // Clean the date (handle ISO format like 2026-02-05T00:00:00Z)
+      final cleanDate = rawDate.contains('T') ? rawDate.split('T')[0] : rawDate.split(' ')[0];
+      
+      return cleanDate == selectedStr;
+    }).toList();
   }
 
   String _getAvailableDates() {
@@ -69,9 +78,6 @@ class _PatientListScreenState extends State<PatientListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final formattedDate = DateFormat('EEEE, MMMM d').format(now);
-
     return Scaffold(
       backgroundColor: Colors.black,
       body: Container(
@@ -98,20 +104,31 @@ class _PatientListScreenState extends State<PatientListScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 12),
-                      _buildHeader(formattedDate),
+                      _buildHeader(),
+                      const SizedBox(height: 24),
+                      _buildDatePicker(),
                       const SizedBox(height: 32),
                       if (_isLoading)
                         const Center(child: Padding(
                           padding: EdgeInsets.only(top: 100),
                           child: CircularProgressIndicator(color: Colors.white),
                         ))
-                      else if (_appointments.isEmpty)
-                        const Center(child: Padding(
-                          padding: EdgeInsets.only(top: 100),
-                          child: Text('No appointments scheduled', style: TextStyle(color: AppColors.silver500)),
+                      else if (_filteredAppointments.isEmpty)
+                        Center(child: Padding(
+                          padding: const EdgeInsets.only(top: 60),
+                          child: Column(
+                            children: [
+                              Icon(Icons.event_busy_rounded, size: 48, color: Colors.white.withOpacity(0.1)),
+                              const SizedBox(height: 12),
+                              Text(
+                                'No appointments for ${DateFormat('MMM d').format(_selectedDate)}',
+                                style: const TextStyle(color: AppColors.silver500),
+                              ),
+                            ],
+                          ),
                         ))
                       else
-                        ..._appointments.map((apt) => _buildPatientCard(apt)),
+                        ..._filteredAppointments.map((apt) => _buildPatientCard(apt)),
                       const SizedBox(height: 120),
                     ],
                   ),
@@ -146,17 +163,24 @@ class _PatientListScreenState extends State<PatientListScreen> {
     );
   }
 
-  Widget _buildHeader(String date) {
+  Widget _buildHeader() {
+    final now = DateTime.now();
+    final isToday = _selectedDate.year == now.year && 
+                   _selectedDate.month == now.month && 
+                   _selectedDate.day == now.day;
+    
+    final headerTitle = isToday ? "Today's\nSchedule" : "Schedule";
+    final dateText = DateFormat('EEEE, MMMM d').format(_selectedDate);
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
         const SizedBox(height: 12),
         ShaderMask(
           shaderCallback: (bounds) => AppColors.silverGradient.createShader(bounds),
-          child: const Text(
-            "Today's\nSchedule",
-            style: TextStyle(
+          child: Text(
+            headerTitle,
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 34,
               fontWeight: FontWeight.w800,
@@ -167,7 +191,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
         ),
         const SizedBox(height: 12),
         Text(
-          date,
+          dateText,
           style: const TextStyle(
             color: Color(0xFF94A3B8),
             fontSize: 15,
@@ -176,6 +200,71 @@ class _PatientListScreenState extends State<PatientListScreen> {
         ),
       ],
     ).animate().fadeIn(duration: 600.ms);
+  }
+
+  Widget _buildDatePicker() {
+    return SizedBox(
+      height: 80,
+      child: ListView.builder(
+        controller: _calendarScrollController,
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: _visibleDates.length,
+        itemBuilder: (context, index) {
+          final date = _visibleDates[index];
+          final now = DateTime.now();
+          final isToday = date.year == now.year && date.month == now.month && date.day == now.day;
+          final isSelected = date.year == _selectedDate.year && 
+                            date.month == _selectedDate.month && 
+                            date.day == _selectedDate.day;
+          
+          return GestureDetector(
+            onTap: () => setState(() => _selectedDate = date),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 56,
+              margin: const EdgeInsets.only(right: 12),
+              decoration: BoxDecoration(
+                color: isSelected 
+                    ? Colors.white.withOpacity(0.15) 
+                    : Colors.white.withOpacity(0.03),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isSelected 
+                      ? Colors.white.withOpacity(0.3) 
+                      : isToday 
+                          ? Colors.white.withOpacity(0.1)
+                          : Colors.transparent,
+                  width: 1.5,
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    _weekDays[date.weekday % 7],
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : AppColors.silver500,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    date.day.toString(),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 
   List<Widget> _buildGroupedAppointments() {
